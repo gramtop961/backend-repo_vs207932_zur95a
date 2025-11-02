@@ -11,10 +11,10 @@ Model name is converted to lowercase for the collection name:
 - BlogPost -> "blogs" collection
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, Literal
 
-# Example schemas (replace with your own):
+# Example schemas (kept for reference):
 
 class User(BaseModel):
     """
@@ -38,11 +38,41 @@ class Product(BaseModel):
     category: str = Field(..., description="Product category")
     in_stock: bool = Field(True, description="Whether product is in stock")
 
-# Add your own schemas here:
-# --------------------------------------------------
+# Hospital Kiosk Schemas
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+DepartmentName = Literal[
+    "General",
+    "Cardiology",
+    "Pediatrics",
+    "Radiology",
+    "Orthopedics",
+]
+
+class Appointment(BaseModel):
+    """
+    Appointments collection
+    Collection name: "appointment"
+    """
+    patient_name: str = Field(..., min_length=2)
+    phone: str = Field(..., description="Contact number")
+    email: Optional[EmailStr] = Field(None)
+    department: DepartmentName
+    date: str = Field(..., pattern=r"^\d{4}-\d{2}-\d{2}$", description="YYYY-MM-DD")
+    time_slot: Optional[str] = Field(None, description="Optional time slot label, e.g., 10:00")
+    status: Literal["booked", "checked_in"] = "booked"
+    booking_code: Optional[str] = Field(None, description="System-generated code for check-in")
+
+class AppointmentCreate(BaseModel):
+    patient_name: str
+    phone: str
+    email: Optional[EmailStr] = None
+    department: DepartmentName
+    date: str
+    time_slot: Optional[str] = None
+
+class CheckInRequest(BaseModel):
+    booking_code: Optional[str] = None
+    patient_name: Optional[str] = None
+    phone: Optional[str] = None
+    department: Optional[DepartmentName] = None
+    date: Optional[str] = None
